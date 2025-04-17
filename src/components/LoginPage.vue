@@ -1,81 +1,67 @@
 <template>
-    <div class="login-container">
-        <h1>Login Page</h1>
-        <form @submit.prevent="login" class="login-form">
-            <label>Username:</label>
-            <input v-model="username" type="text" placeholder="Enter username" />
-            <label>Password:</label>
-            <input v-model="password" type="password" placeholder="Enter password" />
-            <label>Email:</label>
-            <input v-model="email" type="email" placeholder="Enter email" />
-            <label>Phone:</label>
-            <input v-model="phone" type="text" placeholder="Enter phone number" />
-            <button type="submit">Login</button>
-        </form>
-    </div>
+  <div class="login-container">
+    <h1>Login</h1>
+    <form @submit.prevent="handleLogin">
+      <input v-model="form.name" placeholder="Name" />
+      <input v-model="form.email" placeholder="Email" />
+      <input v-model="form.phone" placeholder="Phone" />
+      <input v-model="form.password" placeholder="Password" type="password" />
+      <button type="submit">Login</button>
+    </form>
+  </div>
 </template>
 
 <script>
 export default {
-    data() {
-        return {
-            username: '',
-            password: '',
-            email: '',
-            phone: ''
-        }
-    },
-    methods: {
-        login() {
-            if (!this.username.trim() || !this.password.trim() || !this.email.trim() || !this.phone.trim()) {
-                alert('Please fill in all fields.')
-                return
-            }
+  data() {
+    return {
+      form: {
+        name: '',
+        email: '',
+        phone: '',
+        password: ''
+      }
+    };
+  },
+  methods: {
+    handleLogin() {
+      const { name, email, phone, password } = this.form;
+      if (!name || !email || !phone || !password) {
+        alert('All fields are required');
+        return;
+      }
 
-            const userData = {
-                username: this.username,
-                password: this.password,
-                email: this.email,
-                phone: this.phone
-            }
+      const userData = {
+        id: Date.now(),
+        ...this.form
+      };
 
-            localStorage.setItem('user', JSON.stringify(userData))
+      const storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+      storedUsers.push(userData);
+      localStorage.setItem('users', JSON.stringify(storedUsers));
+      localStorage.setItem('currentUser', JSON.stringify(userData));
 
-            this.$router.push({ name: 'HomePage' })
-        }
+      this.$router.push('/dashboard');
     }
-}
+  }
+};
 </script>
 
-<style scoped>
+<style>
 .login-container {
-    max-width: 400px;
-    margin: 100px auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
+  max-width: 400px;
+  margin: 100px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-
-.login-form {
-    display: flex;
-    flex-direction: column;
+form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
-
-label {
-    margin-top: 10px;
-}
-
-input {
-    padding: 8px;
-    margin-top: 4px;
-    margin-bottom: 12px;
-}
-
-button {
-    padding: 10px;
-    background: #42b983;
-    color: white;
-    border: none;
-    border-radius: 4px;
+input, button {
+  margin: 8px 0;
+  padding: 10px;
 }
 </style>

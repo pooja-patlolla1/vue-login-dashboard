@@ -1,48 +1,45 @@
 <template>
   <div class="dashboard">
     <h1>Dashboard Page</h1>
-    <div class="header">
-      <span class="welcome-msg">Welcome {{ user.username }}</span>
+    <div class="top-bar">
       <button @click="showAddPopup = true">Add</button>
-
+      <span>Welcome</span>
     </div>
 
     <table>
       <thead>
         <tr>
-          <th>Username</th>
-          <th>Password</th>
+          <th>Name</th>
           <th>Email</th>
           <th>Phone</th>
+          <th>Password</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(item, index) in users" :key="index">
-          <td>{{ item.username }}</td>
-          <td>{{ item.password }}</td>
-          <td>{{ item.email }}</td>
-          <td>{{ item.phone }}</td>
+        <tr v-for="(user, index) in users" :key="user.id">
+          <td>{{ user.name }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.phone }}</td>
+          <td>{{ user.password }}</td>
           <td>
-            <button @click="edit(index)">Edit</button>
-            <button @click="remove(index)">Delete</button>
+            <button @click="editUser(index)">Edit</button>
+            <button @click="deleteUser(index)">Delete</button>
           </td>
         </tr>
       </tbody>
     </table>
 
     <!-- Popup -->
-    <div class="popup" v-if="showAddPopup || editIndex !== null">
+    <div v-if="showAddPopup" class="popup">
       <div class="popup-content">
         <h3>{{ editIndex !== null ? 'Edit' : 'Add' }} User</h3>
-        <input v-model="form.username" placeholder="Username" />
-        <input v-model="form.password" type="password" placeholder="Password" />
+        <input v-model="form.name" placeholder="Name" />
         <input v-model="form.email" placeholder="Email" />
         <input v-model="form.phone" placeholder="Phone" />
-        <div class="popup-actions">
-          <button @click="save">Save</button>
-          <button @click="cancel">Cancel</button>
-        </div>
+        <input v-model="form.password" placeholder="Password" />
+        <button @click="saveUser">Save</button>
+        <button @click="cancelEdit">Cancel</button>
       </div>
     </div>
   </div>
@@ -53,141 +50,87 @@ export default {
   data() {
     return {
       users: [],
-      user: {},
-      showAddPopup: false,
-      editIndex: null,
       form: {
-        username: '',
-        password: '',
+        name: '',
         email: '',
-        phone: ''
-      }
-    }
+        phone: '',
+        password: ''
+      },
+      showAddPopup: false,
+      editIndex: null
+    };
   },
   mounted() {
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
-      this.user = JSON.parse(storedUser)
-      this.users.push({ ...this.user })
-    }
-
-    const savedList = localStorage.getItem('users')
-    if (savedList) {
-      this.users = JSON.parse(savedList)
-    }
+    this.users = JSON.parse(localStorage.getItem('users')) || [];
   },
   methods: {
-    save() {
-      if (!this.form.username || !this.form.password || !this.form.email || !this.form.phone) {
-        alert("All fields are required")
-        return
+    saveUser() {
+      const { name, email, phone, password } = this.form;
+      if (!name || !email || !phone || !password) {
+        alert('All fields required');
+        return;
       }
 
       if (this.editIndex !== null) {
-        this.users.splice(this.editIndex, 1, { ...this.form })
+        this.users[this.editIndex] = { ...this.form, id: this.users[this.editIndex].id };
       } else {
-        this.users.push({ ...this.form })
+        this.users.push({ ...this.form, id: Date.now() });
       }
 
-      this.saveToLocal()
-      this.cancel()
+      localStorage.setItem('users', JSON.stringify(this.users));
+      this.resetForm();
     },
-    edit(index) {
-      this.editIndex = index
-      this.form = { ...this.users[index] }
+    editUser(index) {
+      this.form = { ...this.users[index] };
+      this.editIndex = index;
+      this.showAddPopup = true;
     },
-    remove(index) {
-      this.users.splice(index, 1)
-      this.saveToLocal()
+    deleteUser(index) {
+      this.users.splice(index, 1);
+      localStorage.setItem('users', JSON.stringify(this.users));
     },
-    cancel() {
-      this.showAddPopup = false
-      this.editIndex = null
-      this.form = {
-        username: '',
-        password: '',
-        email: '',
-        phone: ''
-      }
+    resetForm() {
+      this.form = { name: '', email: '', phone: '', password: '' };
+      this.editIndex = null;
+      this.showAddPopup = false;
     },
-    saveToLocal() {
-      localStorage.setItem('users', JSON.stringify(this.users))
+    cancelEdit() {
+      this.resetForm();
     }
   }
-}
+};
 </script>
 
 <style scoped>
 .dashboard {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
   text-align: center;
 }
-
-.header {
+.top-bar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  padding: 10px;
 }
-
-.welcome-msg {
-  font-weight: bold;
-  font-size: 16px;
-}
-
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
 }
-
-table,
-th,
-td {
+th, td {
+  padding: 12px;
   border: 1px solid #ccc;
 }
-
-th,
-td {
-  padding: 10px;
-}
-
-button {
-  margin: 2px;
-  padding: 6px 12px;
-}
-
 .popup {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.3);
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-
 }
-
 .popup-content {
   background: white;
   padding: 20px;
-  padding-right: 2rem;
-  border-radius: 10px;
-  min-width: 300px;
-}
-
-.popup-content input {
-  display: block;
-  width: 100%;
-  padding: 8px;
-  margin-top: 10px;
-}
-
-.popup-actions {
-  margin-top: 10px;
-  text-align: right;
+  border-radius: 8px;
 }
 </style>
