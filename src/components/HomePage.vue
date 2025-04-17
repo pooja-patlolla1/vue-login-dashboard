@@ -1,56 +1,47 @@
 <template>
-  <div class="container">
+  <div class="dashboard">
     <h1>Dashboard Page</h1>
+    <div class="header">
+      <span class="welcome-msg">Welcome {{ user.username }}</span>
+      <button @click="showAddPopup = true">Add</button>
 
-    <div class="top-bar">
-        <h3>Welcome</h3>
-        <button class="add-btn" @click="openAddModal">➕ Add</button>
     </div>
 
     <table>
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Phone Number</th>
+          <th>Username</th>
           <th>Password</th>
+          <th>Email</th>
+          <th>Phone</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(entry, index) in entries" :key="index">
-          <td>{{ entry.username }}</td>
-          <td>{{ entry.email }}</td>
-          <td>{{ entry.phone }}</td>
-          <td>{{ entry.password }}</td>
+        <tr v-for="(item, index) in users" :key="index">
+          <td>{{ item.username }}</td>
+          <td>{{ item.password }}</td>
+          <td>{{ item.email }}</td>
+          <td>{{ item.phone }}</td>
           <td>
-            <button @click="openEditModal(index)">✏️ Edit</button>
-            <button @click="deleteEntry(index)">🗑️ Delete</button>
+            <button @click="edit(index)">Edit</button>
+            <button @click="remove(index)">Delete</button>
           </td>
         </tr>
       </tbody>
     </table>
 
-    <!-- Modal -->
-    <div v-if="showModal" class="modal-overlay">
-      <div class="modal">
-        <h2>{{ isEdit ? 'Edit Entry' : 'Add Entry' }}</h2>
-
-        <label>Name:</label>
-        <input v-model="form.username" />
-
-        <label>Email:</label>
-        <input v-model="form.email" />
-
-        <label>Phone Number:</label>
-        <input v-model="form.phone" />
-
-        <label>Password:</label>
-        <input type="password" v-model="form.password" />
-
-        <div class="modal-buttons">
-          <button @click="saveEntry">Save</button>
-          <button @click="closeModal">Cancel</button>
+    <!-- Popup -->
+    <div class="popup" v-if="showAddPopup || editIndex !== null">
+      <div class="popup-content">
+        <h3>{{ editIndex !== null ? 'Edit' : 'Add' }} User</h3>
+        <input v-model="form.username" placeholder="Username" />
+        <input v-model="form.password" type="password" placeholder="Password" />
+        <input v-model="form.email" placeholder="Email" />
+        <input v-model="form.phone" placeholder="Phone" />
+        <div class="popup-actions">
+          <button @click="save">Save</button>
+          <button @click="cancel">Cancel</button>
         </div>
       </div>
     </div>
@@ -61,146 +52,142 @@
 export default {
   data() {
     return {
-      entries: [],
-      showModal: false,
-      isEdit: false,
+      users: [],
+      user: {},
+      showAddPopup: false,
       editIndex: null,
       form: {
         username: '',
+        password: '',
         email: '',
-        phone: '',
-        password: ''
+        phone: ''
       }
     }
   },
-
-  created() {
-    const savedEntries = localStorage.getItem("entries")
-    if (savedEntries) {
-      this.entries = JSON.parse(savedEntries)
-    } else {
-      const { username, password } = this.$route.query
-      if (username && password) {
-        this.entries.push({
-          username,
-          email: '',
-          phone: '',
-          password
-        })
-      }
+  mounted() {
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      this.user = JSON.parse(storedUser)
+      this.users.push({ ...this.user })
     }
-  }, // <- ✅ Don't forget this comma
 
+    const savedList = localStorage.getItem('users')
+    if (savedList) {
+      this.users = JSON.parse(savedList)
+    }
+  },
   methods: {
-    openAddModal() {
-      this.resetForm()
-      this.isEdit = false
-      this.showModal = true
-    },
-    openEditModal(index) {
-      const entry = this.entries[index]
-      this.form = { ...entry }
-      this.isEdit = true
-      this.editIndex = index
-      this.showModal = true
-    },
-    saveEntry() {
-      if (this.isEdit) {
-        this.entries[this.editIndex] = { ...this.form }
-      } else {
-        this.entries.push({ ...this.form })
+    save() {
+      if (!this.form.username || !this.form.password || !this.form.email || !this.form.phone) {
+        alert("All fields are required")
+        return
       }
-      this.saveToLocalStorage()
-      this.closeModal()
+
+      if (this.editIndex !== null) {
+        this.users.splice(this.editIndex, 1, { ...this.form })
+      } else {
+        this.users.push({ ...this.form })
+      }
+
+      this.saveToLocal()
+      this.cancel()
     },
-    deleteEntry(index) {
-      this.entries.splice(index, 1)
-      this.saveToLocalStorage()
+    edit(index) {
+      this.editIndex = index
+      this.form = { ...this.users[index] }
     },
-    saveToLocalStorage() {
-      localStorage.setItem("entries", JSON.stringify(this.entries))
+    remove(index) {
+      this.users.splice(index, 1)
+      this.saveToLocal()
     },
-    closeModal() {
-      this.showModal = false
-    },
-    resetForm() {
+    cancel() {
+      this.showAddPopup = false
+      this.editIndex = null
       this.form = {
         username: '',
+        password: '',
         email: '',
-        phone: '',
-        password: ''
+        phone: ''
       }
+    },
+    saveToLocal() {
+      localStorage.setItem('users', JSON.stringify(this.users))
     }
   }
 }
 </script>
 
-
 <style scoped>
-.container {
-  padding: 20px;
-  font-family: Arial, sans-serif;
-}
-
-h1 {
+.dashboard {
+  max-width: 900px;
+  margin: 0 auto;
   text-align: center;
-  margin-bottom: 5px;
 }
 
-.top-bar {
+.header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
-.top-bar h3 {
-  margin: 0;
-}
-
-.add-btn {
-  margin-bottom: 10px;
+.welcome-msg {
+  font-weight: bold;
+  font-size: 16px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 10px;
+}
+
+table,
+th,
+td {
+  border: 1px solid #ccc;
 }
 
 th,
 td {
-  border: 1px solid #ccc;
-  padding: 8px;
-  text-align: left;
+  padding: 10px;
 }
 
-.modal-overlay {
+button {
+  margin: 2px;
+  padding: 6px 12px;
+}
+
+.popup {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
+
 }
 
-.modal {
+.popup-content {
   background: white;
   padding: 20px;
-  width: 300px;
-  border-radius: 8px;
+  padding-right: 2rem;
+  border-radius: 10px;
+  min-width: 300px;
 }
 
-.modal input {
+.popup-content input {
+  display: block;
   width: 100%;
-  margin-bottom: 10px;
-  padding: 5px;
+  padding: 8px;
+  margin-top: 10px;
 }
 
-.modal-buttons {
-  display: flex;
-  justify-content: space-between;
+.popup-actions {
+  margin-top: 10px;
+  text-align: right;
 }
 </style>

@@ -1,14 +1,17 @@
 <template>
     <div class="login-container">
-        <h2>Login Page</h2>
-
-        <label>Username:</label>
-        <input v-model="username" type="text" placeholder="Enter username" />
-
-        <label>Password:</label>
-        <input v-model="password" type="password" placeholder="Enter password" />
-
-        <button @click="login">Submit</button>
+        <h1>Login Page</h1>
+        <form @submit.prevent="login" class="login-form">
+            <label>Username:</label>
+            <input v-model="username" type="text" placeholder="Enter username" />
+            <label>Password:</label>
+            <input v-model="password" type="password" placeholder="Enter password" />
+            <label>Email:</label>
+            <input v-model="email" type="email" placeholder="Enter email" />
+            <label>Phone:</label>
+            <input v-model="phone" type="text" placeholder="Enter phone number" />
+            <button type="submit">Login</button>
+        </form>
     </div>
 </template>
 
@@ -17,22 +20,28 @@ export default {
     data() {
         return {
             username: '',
-            password: ''
+            password: '',
+            email: '',
+            phone: ''
         }
     },
     methods: {
         login() {
-            if (this.username && this.password) {
-                this.$router.push({
-                    path: '/home',
-                    query: {
-                        username: this.username,
-                        password: this.password
-                    }
-                })
-            } else {
-                alert("Please fill in all fields.")
+            if (!this.username.trim() || !this.password.trim() || !this.email.trim() || !this.phone.trim()) {
+                alert('Please fill in all fields.')
+                return
             }
+
+            const userData = {
+                username: this.username,
+                password: this.password,
+                email: this.email,
+                phone: this.phone
+            }
+
+            localStorage.setItem('user', JSON.stringify(userData))
+
+            this.$router.push({ name: 'HomePage' })
         }
     }
 }
@@ -40,51 +49,33 @@ export default {
 
 <style scoped>
 .login-container {
-    max-width: 350px;
+    max-width: 400px;
     margin: 100px auto;
-    padding: 30px;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    background-color: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
 }
 
-h2 {
-    text-align: center;
-    margin-bottom: 20px;
-    color: #42b983;
+.login-form {
+    display: flex;
+    flex-direction: column;
 }
 
 label {
-    display: block;
-    margin-top: 15px;
-    font-weight: bold;
+    margin-top: 10px;
 }
 
 input {
-    width: 100%;
-    padding: 10px;
-    margin-top: 5px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
+    padding: 8px;
+    margin-top: 4px;
+    margin-bottom: 12px;
 }
 
 button {
-    width: 100%;
     padding: 10px;
-    margin-top: 25px;
-    background-color: #42b983;
+    background: #42b983;
     color: white;
     border: none;
-    border-radius: 5px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-button:hover {
-    background-color: #369e74;
+    border-radius: 4px;
 }
 </style>
